@@ -60,24 +60,48 @@ describe("pick()", () => {
   });
 });
 
-// I can't understand behavior of this function...
-test.skip("replace()", async () => {
+test("replace()", async () => {
   const result = await toString(
+    filter({ filter: /items\.\d+\.topping/ }),
     replace({
-      filter: /items\.\d+\.id/,
-      replacement: (stack, token) => {
-        // if (token.name !== "stringValue") {
-        //   return token;
-        // }
-        return [{ name: "stringValue", value: "0000" }];
+      filter: (_, token) => token.name === "stringValue",
+      replacement: (_, token) => [
+        { name: "stringValue", value: token.value?.toString().toUpperCase() },
+      ],
+    })
+  );
+  expect(result).toEqual({
+    items: [
+      {
+        topping: [
+          { id: "5001", type: "NONE" },
+          { id: "5002", type: "GLAZED" },
+          { id: "5005", type: "SUGAR" },
+          { id: "5007", type: "POWDERED SUGAR" },
+          { id: "5006", type: "CHOCOLATE WITH SPRINKLES" },
+          { id: "5003", type: "CHOCOLATE" },
+          { id: "5004", type: "MAPLE" },
+        ],
       },
-      allowEmptyReplacement: true,
-    }),
-    pick({ filter: "items.0.id" })
-  );
-  expect(result).toEqual(
-    '{"items":[{"id":"0000"},{"id":"0000"},{"id":"0000"}]}'
-  );
+      {
+        topping: [
+          { id: "5001", type: "NONE" },
+          { id: "5002", type: "GLAZED" },
+          { id: "5005", type: "SUGAR" },
+          { id: "5003", type: "CHOCOLATE" },
+          { id: "5004", type: "MAPLE" },
+        ],
+      },
+      {
+        topping: [
+          { id: "5001", type: "NONE" },
+          { id: "5002", type: "GLAZED" },
+          { id: "5003", type: "CHOCOLATE" },
+          { id: "5004", type: "MAPLE" },
+        ],
+      },
+    ],
+  });
 });
 
 test("ignore()", async () => {
