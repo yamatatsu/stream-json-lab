@@ -1,0 +1,22 @@
+{
+  "name": "@stream-json-lab/playground",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "stream-chain": "^2.0.1",
+    "stream-json": "^1.7.3"
+  },
+  "devDependencies": {
+    "@types/node": "^18.15.11",
+    "@types/stream-chain": "^2.0.1",
+    "@types/stream-json": "^1.7.3",
+    "vitest": "^0.30.0"
+  }
+}

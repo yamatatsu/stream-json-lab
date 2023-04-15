@@ -1,37 +1,32 @@
 lockfileVersion: '6.0'
 
-importers:
+dependencies:
+  stream-chain:
+    specifier: ^2.0.1
+    version: 2.0.1
+  stream-json:
+    specifier: ^1.7.3
+    version: 1.7.3
 
-  .:
-    devDependencies:
-      prettier:
-        specifier: ^2.8.7
-        version: 2.8.7
-      typescript:
-        specifier: ^5.0.4
-        version: 5.0.4
-
-  packages/playground:
-    dependencies:
-      stream-chain:
-        specifier: ^2.0.1
-        version: 2.0.1
-      stream-json:
-        specifier: ^1.7.3
-        version: 1.7.3
-    devDependencies:
-      '@types/node':
-        specifier: ^18.15.11
-        version: 18.15.11
-      '@types/stream-chain':
-        specifier: ^2.0.1
-        version: 2.0.1
-      '@types/stream-json':
-        specifier: ^1.7.3
-        version: 1.7.3
-      vitest:
-        specifier: ^0.30.0
-        version: 0.30.0
+devDependencies:
+  '@types/node':
+    specifier: ^18.15.11
+    version: 18.15.11
+  '@types/stream-chain':
+    specifier: ^2.0.1
+    version: 2.0.1
+  '@types/stream-json':
+    specifier: ^1.7.3
+    version: 1.7.3
+  prettier:
+    specifier: ^2.8.7
+    version: 2.8.7
+  typescript:
+    specifier: ^5.0.4
+    version: 5.0.4
+  vitest:
+    specifier: ^0.30.0
+    version: 0.30.0
 
 packages:
 
@@ -585,8 +580,8 @@ packages:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
     dev: true
 
-  /resolve@1.22.3:
-    resolution: {integrity: sha512-P8ur/gp/AmbEzjr729bZnLjXK5Z+4P0zhIJgBgzqRih7hL7BOukHGtSTA3ACMY467GRFz3duQsi0bDZdR7DKdw==}
+  /resolve@1.22.2:
+    resolution: {integrity: sha512-Sb+mjNHOULsBv818T40qSPeRiuWLyaGMa5ewydRLFimneixmVy2zdivRl+AF6jaYPC8ERxGDmFSiqui6SfPd+g==}
     hasBin: true
     dependencies:
       is-core-module: 2.12.0
@@ -740,7 +735,7 @@ packages:
       '@types/node': 18.15.11
       esbuild: 0.17.16
       postcss: 8.4.21
-      resolve: 1.22.3
+      resolve: 1.22.2
       rollup: 3.20.2
     optionalDependencies:
       fsevents: 2.3.2
