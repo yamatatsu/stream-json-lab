@@ -141,6 +141,55 @@ test("filter items by the property of the item", async () => {
   ]);
 });
 
+test("filter chart data", async () => {
+  const asm = new Asm();
+
+  const from = new Date("2022-11-24T00:00Z").getTime();
+  const to = new Date("2022-11-24T01:00Z").getTime();
+
+  const transformFn = (token: { name: string; value?: string | undefined }) => {
+    asm.consume(token);
+
+    if (asm.depth !== 1) {
+      return none;
+    }
+
+    const items = asm.current;
+
+    if (items.length === 0) {
+      return none;
+    }
+
+    const item = items.pop();
+
+    if (from <= item[0] && item[0] < to) {
+      return [item];
+    }
+
+    return none;
+  };
+
+  const pipeline = chain([
+    createReadStream("./large-chart-data.json"),
+    parser(),
+    pick({ filter: "data1" }),
+    transformFn,
+    disassembler(),
+    stringer({ makeArray: true }),
+  ]);
+
+  const res = await getOutputAsString(pipeline);
+
+  expect(JSON.parse(res)).toEqual([
+    [1669248010350, 16.8],
+    [1669248609960, 16.9],
+    [1669249210200, 16.8],
+    [1669249819790, 17.4],
+    [1669250410130, 17.7],
+    [1669251010120, 17.7],
+  ]);
+});
+
 // ======================
 // test-util
 
