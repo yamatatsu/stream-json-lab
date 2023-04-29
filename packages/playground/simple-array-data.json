@@ -1,0 +1,12 @@
+[
+  { "timestamp": 1682640000000, "temperature": 22 },
+  { "timestamp": 1682643600000, "temperature": 27 },
+  { "timestamp": 1682647200000, "temperature": 31 },
+  { "timestamp": 1682650800000, "temperature": 33 },
+  { "timestamp": 1682654400000, "temperature": 29 },
+  { "timestamp": 1682658000000, "temperature": 27 },
+  { "timestamp": 1682661600000, "temperature": 30 },
+  { "timestamp": 1682665200000, "temperature": 35 },
+  { "timestamp": 1682668800000, "temperature": 31 },
+  { "timestamp": 1682672400000, "temperature": 28 }
+]

@@ -20,10 +20,8 @@ main()
   });
 
 async function main() {
+  const batchPutter = new BatchPutter();
   const asm = new Asm();
-
-  let count = 0;
-  let promise: Promise<any> = Promise.resolve();
 
   const pipeline = chain([
     createReadStream(
@@ -39,14 +37,7 @@ async function main() {
       const [timestamp, value] = asm.current.pop();
 
       const item = { type: asm.path[0], timestamp, value };
-      console.info("count:", ++count, item);
-
-      promise = promise.then(() => {
-        return doc.put({
-          TableName: "stream-json-lab",
-          Item: item,
-        });
-      });
+      batchPutter.addItem(item);
 
       return token;
     },
@@ -59,5 +50,42 @@ async function main() {
     pipeline.on("end", resolve);
   });
 
-  await promise;
+  await batchPutter.waitDone();
+}
+
+type Item = { type: string; timestamp: number; value: number };
+class BatchPutter {
+  private count = 0;
+  private items: Item[] = [];
+  private promise: Promise<any> = Promise.resolve();
+
+  addItem(item: Item): void {
+    this.items.push(item);
+    if (this.items.length < 25) return;
+    this.batchPut();
+  }
+
+  async waitDone() {
+    this.batchPut();
+    await this.promise;
+  }
+
+  private batchPut() {
+    const items = this.items.splice(0, 25);
+    this.promise = this.promise.then(() => {
+      console.info(
+        "batchPut:",
+        ++this.count,
+        items[0].type,
+        items[0].timestamp
+      );
+      return doc.batchWrite({
+        RequestItems: {
+          "stream-json-lab": items.map((item) => ({
+            PutRequest: { Item: item },
+          })),
+        },
+      });
+    });
+  }
 }
