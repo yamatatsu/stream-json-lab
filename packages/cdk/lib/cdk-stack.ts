@@ -7,8 +7,8 @@ import {
   NodejsFunctionProps,
 } from "aws-cdk-lib/aws-lambda-nodejs";
 import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
-import { Bucket } from "aws-cdk-lib/aws-s3";
-import { AttributeType, Table } from "aws-cdk-lib/aws-dynamodb";
+import { Bucket, IBucket } from "aws-cdk-lib/aws-s3";
+import { AttributeType, ITable, Table } from "aws-cdk-lib/aws-dynamodb";
 
 const path = (_path: string) => resolve(__dirname, _path);
 
@@ -20,10 +20,10 @@ export class CdkStack extends cdk.Stack {
 
     const table = new Table(this, "table", {
       tableName: "stream-json-lab",
-      partitionKey: { name: "type", type: AttributeType.STRING },
+      partitionKey: { name: "deviceId", type: AttributeType.STRING },
       sortKey: { name: "timestamp", type: AttributeType.NUMBER },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
-      // writeCapacity: 100,
+      // writeCapacity: 1000, // use for fixture
     });
 
     // Setup S3 bucket
@@ -45,56 +45,87 @@ export class CdkStack extends cdk.Stack {
     this.buildFunction("ddb-128", {
       entry: path("function.ddb.ts"),
       memorySize: 128,
-      environment: {
-        TABLE_NAME: table.tableName,
-      },
-      cb: (fn) => {
-        table.grantReadData(fn);
-      },
+      table,
     });
 
-    // TODO: get s3 as string
+    this.buildFunction("ddb-256", {
+      entry: path("function.ddb.ts"),
+      memorySize: 256,
+      table,
+    });
+
+    this.buildFunction("ddb-512", {
+      entry: path("function.ddb.ts"),
+      memorySize: 512,
+      table,
+    });
+
+    // get s3 as string
+
+    this.buildFunction("s3-128", {
+      entry: path("function.s3.ts"),
+      memorySize: 128,
+      bucket,
+    });
+
+    this.buildFunction("s3-256", {
+      entry: path("function.s3.ts"),
+      memorySize: 256,
+      bucket,
+    });
+
+    this.buildFunction("s3-512", {
+      entry: path("function.s3.ts"),
+      memorySize: 512,
+      bucket,
+    });
 
     // ======================
     // get s3 as stream
 
-    // https://3pmcrrme5lcmahtx6uuu3ux6540mxdjd.lambda-url.ap-northeast-1.on.aws/
     this.buildFunction("s3-stream-128", {
-      stream: true,
       entry: path("function.s3-stream.ts"),
       memorySize: 128,
-      environment: {
-        BUCKET_NAME: bucket.bucketName,
-      },
-      cb: (fn) => {
-        bucket.grantRead(fn);
-      },
+      bucket,
+      stream: true,
     });
 
-    // https://3dbsou357ctkfo5gxdhfm65pli0vbndk.lambda-url.ap-northeast-1.on.aws/
     this.buildFunction("s3-stream-256", {
-      stream: true,
       entry: path("function.s3-stream.ts"),
       memorySize: 256,
-      environment: {
-        BUCKET_NAME: bucket.bucketName,
-      },
-      cb: (fn) => {
-        bucket.grantRead(fn);
-      },
+      bucket,
+      stream: true,
     });
 
-    // https://2debwf4athb5pvoatsnlhohdqa0vllub.lambda-url.ap-northeast-1.on.aws/
     this.buildFunction("s3-stream-512", {
-      stream: true,
       entry: path("function.s3-stream.ts"),
       memorySize: 512,
-      environment: {
-        BUCKET_NAME: bucket.bucketName,
-      },
-      cb: (fn) => {
-        bucket.grantRead(fn);
-      },
+      bucket,
+      stream: true,
+    });
+
+    // ======================
+    // get s3 as stream, part 2
+
+    this.buildFunction("s3-stream2-128", {
+      entry: path("function.s3-stream2.ts"),
+      memorySize: 128,
+      bucket,
+      stream: true,
+    });
+
+    this.buildFunction("s3-stream2-256", {
+      entry: path("function.s3-stream2.ts"),
+      memorySize: 256,
+      bucket,
+      stream: true,
+    });
+
+    this.buildFunction("s3-stream2-512", {
+      entry: path("function.s3-stream2.ts"),
+      memorySize: 512,
+      bucket,
+      stream: true,
     });
   }
 
@@ -102,14 +133,22 @@ export class CdkStack extends cdk.Stack {
     id: string,
     props: NodejsFunctionProps & {
       stream?: boolean;
-      cb?: (fn: NodejsFunction) => void;
+      table?: ITable;
+      bucket?: IBucket;
     }
   ) {
+    const { stream, table, bucket } = props;
+
     const fn = new NodejsFunction(this, id, {
       runtime: Runtime.NODEJS_18_X,
-      timeout: cdk.Duration.seconds(10),
+      timeout: cdk.Duration.seconds(120),
       bundling: {
         sourceMap: true,
+      },
+      environment: {
+        ...props.environment,
+        ...(table && { TABLE_NAME: table.tableName }),
+        ...(bucket && { BUCKET_NAME: bucket.bucketName }),
       },
       ...props,
     });
@@ -117,12 +156,15 @@ export class CdkStack extends cdk.Stack {
       authType: FunctionUrlAuthType.NONE,
     });
 
-    if (props.stream) {
+    if (stream) {
       const cfnUrl = functionUrl.node.defaultChild as CfnUrl;
       cfnUrl.invokeMode = "RESPONSE_STREAM";
     }
 
-    props.cb?.(fn);
+    table?.grantReadData(fn);
+    bucket?.grantRead(fn);
+
+    new cdk.CfnOutput(this, `${id}-url`, { value: functionUrl.url });
 
     return fn;
   }

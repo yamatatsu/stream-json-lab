@@ -89,12 +89,13 @@ const stream = createReadStream("./simple-array-data.json")
 ### `streamValues()`
 
 Values 系の機能を使うことで json 形式の文字列データをオブジェクトとして取り出すことができます。  
-Values 系の機能は`stream-json`の作者が手掛ける別のライブラリ`stream-chain`と一緒に使います。
+Values 系の機能は `stream-json` の作者が手掛ける別のライブラリ `stream-chain` と一緒に使います。
 
-以下の例では`streamValues()`を使って配列の要素をオブジェクトとして取り出し、特定の timestamp を持つ要素のみを残した json を作成しています。
+以下の例では `streamValues()` を使って配列の要素をオブジェクトとして取り出し、特定の timestamp を持つ要素のみを残した json を作成しています。
 
 ```ts
 import { createReadStream } from "node:fs";
+import { chain } from "stream-chain";
 import { parser } from "stream-json";
 import { pick } from "stream-json/filters/Pick";
 import { streamValues } from "stream-json/streamers/StreamValues";
@@ -123,9 +124,5 @@ const stream = chain([
 
 ## まとめ
 
-[4/7 のアップデートで Lambda が stream レスポンスを返せるようになりました。](https://aws.amazon.com/jp/about-aws/whats-new/2023/04/aws-lambda-response-payload-streaming/)
-s3 などに格納された巨大な json ファイルを効率よく API レスポンスとして返すことができます。
-しかし、単に s3 に置かれたファイルを http で参照するだけなら s3 を直接参照したり CloudFront を挟んだりすればもの足りるので、いまいち使い所がわからずにいました。
-
-今回調べた stream-json を用いることで、s3 に置かれた json ファイルを加工してレスポンスとして返すことができます。
-このような付加価値をつけることで streaming response を生かしたワークロードが実現できるのではないかと思います。
+今回調べた stream-json を用いることで、json ファイルをメモリ展開せずに、stream のまま書き換えが可能です。
+lambda などの memory が限られたランタイムで、大きな json ファイルを扱う際に有効かと思われます。

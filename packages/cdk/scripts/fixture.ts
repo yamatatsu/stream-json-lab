@@ -1,47 +1,26 @@
 import { createReadStream } from "node:fs";
 import { chain } from "stream-chain";
 import { parser } from "stream-json";
-import Asm from "stream-json/Assembler";
-import { stringer } from "stream-json/stringer";
+import { streamArray } from "stream-json/streamers/StreamArray";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 
 const doc = DynamoDBDocument.from(
   new DynamoDBClient({ region: "ap-northeast-1" })
 );
-
-main()
-  .then(() => {
-    console.info("Done");
-  })
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  });
+const filePath = __dirname + "/../lib/bucket-resource/large-chart-data.json";
 
 async function main() {
   const batchPutter = new BatchPutter();
-  const asm = new Asm();
 
   const pipeline = chain([
-    createReadStream(
-      __dirname + "/../lib/bucket-resource/large-chart-data.json"
-    ),
+    createReadStream(filePath),
     parser(),
-    (token) => {
-      asm.consume(token);
-
-      if (asm.depth !== 2) return token;
-      if (asm.current.length === 0) return token;
-
-      const [timestamp, value] = asm.current.pop();
-
-      const item = { type: asm.path[0], timestamp, value };
+    streamArray(),
+    ({ value }) => {
+      const item = { deviceId: "001", timestamp: value[0], value: value[1] };
       batchPutter.addItem(item);
-
-      return token;
     },
-    stringer(),
   ]);
 
   pipeline.on("data", () => {});
@@ -53,7 +32,7 @@ async function main() {
   await batchPutter.waitDone();
 }
 
-type Item = { type: string; timestamp: number; value: number };
+type Item = { deviceId: string; timestamp: number; value: number };
 class BatchPutter {
   private count = 0;
   private items: Item[] = [];
@@ -73,12 +52,10 @@ class BatchPutter {
   private batchPut() {
     const items = this.items.splice(0, 25);
     this.promise = this.promise.then(() => {
-      console.info(
-        "batchPut:",
-        ++this.count,
-        items[0].type,
-        items[0].timestamp
-      );
+      if (items.length === 0) return;
+
+      console.info("batchPut:", ++this.count, items[0].timestamp);
+
       return doc.batchWrite({
         RequestItems: {
           "stream-json-lab": items.map((item) => ({
@@ -89,3 +66,12 @@ class BatchPutter {
     });
   }
 }
+
+main()
+  .then(() => {
+    console.info("Done");
+  })
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
